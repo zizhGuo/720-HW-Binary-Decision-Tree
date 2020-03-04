@@ -142,12 +142,15 @@ def threshold_selection_in_attribute(dataframe, attribute, step):
     return attribute, best_threshold, best_ent_average, best_split_rate
 
 def class_assign(dataframe):
-    assam_count = np.size(dataframe[dataframe['Class'] == 'Assam']) # dont know if can use size or should use number of records
-    buhttan_count = np.size(dataframe[dataframe['Class'] == 'Buhttan']) # dont know if can use size or should use number of records
-    if assam_count < buhttan_count:
-        print("Class: Assam")
-    else:
+    dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
+    dataframe_bhuttan = dataframe[dataframe['Class'] == 'Buhttan']
+    assam_count = np.size(dataframe_assam['Age'])
+    bhuttan_count = np.size(dataframe_bhuttan['Age'])
+
+    if assam_count < bhuttan_count:
         print("Class: Bhuttan")
+    else:
+        print("Class: Assam")
 
 def decision_tree(dataframe, depth):
     # ---------------- Stop Criteria--------------------------------
