@@ -3,11 +3,18 @@
 # Topic: Decistion Tree
 # Assignment: HW05
 #
-# Author: Zizhun Guo / maybe someone joins
+# Author: Zizhun Guo
 # Email: zg2808@cs.rit.edu
+# Author: Martin Qian
+# Email: jq3513@rit.edu
 # 
 # RIT, Rochester, NY
-# 
+#
+# Pending tasks:
+# 1. Class assigment at leaf node
+# 2. Print trained function
+# 3. Trained program writes csv file
+#
 # Zizhun GUO @ All rights researved
 # -----------------------------------------------------------
 
@@ -38,10 +45,12 @@ class dt_node:
 #     current_node.right_node = create_tree(val + 1)
 #     return current_node
 
-# def traverse(node):
-#     print(" "* value + str(node.value))
-#     if node.left_node != None: traverse(node.left_node)
-#     if node.right_node != None: traverse(node.right_node)
+def pre_traverse(node):
+    print(node.attribute)
+    print(node.threshold)
+    print(node.ent_average)
+    if node.left_node != None: pre_traverse(node.left_node)
+    if node.right_node != None: pre_traverse(node.right_node)
 
 
 # def main():
@@ -60,7 +69,7 @@ def data_preprocessing(dataframe):
     # print(columns)
     for column in columns:
         # print(column)
-        data = np.round(dataframe[column] / 1) * 1
+        data = np.round(dataframe[column])
         dataframe[column] = data
     
     data_ages= np.round(dataframe['Age'] / 2) * 2 # 
@@ -107,9 +116,14 @@ def entropy_average(dataframe, attribute, threshold):
     # print("ent_left = " + str(ent_left))
     # print("ent_right = " + str(ent_right))
 
-    ent_average = (ent_left + ent_right) / 2
+    # ent_average = (ent_left + ent_right) / 2
+    weight_left = np.size(df_left['Age']) / np.size(dataframe['Age'])
+    weight_right =  1 - weight_left
+    ent_average = ent_left * weight_left + ent_right * weight_right
+
     # print("ent_average = " + str(ent_average) )
     # print("")
+
     return ent_average, split_rate
 
 def threshold_selection_in_attribute(dataframe, attribute, step):
@@ -121,7 +135,7 @@ def threshold_selection_in_attribute(dataframe, attribute, step):
     threshold = min_threshold # threshold for traversing
     best_split_rate = np.inf
 
-    while threshold != max_threshold:
+    while threshold < max_threshold:
         
         ent_average, split_rate = entropy_average(dataframe, attribute, threshold)
         
@@ -143,14 +157,14 @@ def threshold_selection_in_attribute(dataframe, attribute, step):
 
 def class_assign(dataframe):
     dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
-    dataframe_bhuttan = dataframe[dataframe['Class'] == 'Buhttan']
+    dataframe_bhuttan = dataframe[dataframe['Class'] == 'Bhuttan']
     assam_count = np.size(dataframe_assam['Age'])
     bhuttan_count = np.size(dataframe_bhuttan['Age'])
+    
+    print("Class: Bhuttan : "+ str(bhuttan_count))
+    print("Class: Assam: " + str(assam_count))
 
-    if assam_count < bhuttan_count:
-        print("Class: Bhuttan")
-    else:
-        print("Class: Assam")
+
 
 def decision_tree(dataframe, depth):
     # ---------------- Stop Criteria--------------------------------
@@ -164,7 +178,7 @@ def decision_tree(dataframe, depth):
         class_assign(dataframe)
         return None
     
-    if depth > 3:
+    if depth > 2:
         class_assign(dataframe)
         return None
  
@@ -191,7 +205,7 @@ def decision_tree(dataframe, depth):
     # print("--------------------------------------------")
     # print("best attribute = " + best_attribute)
     # print("best threshold = " + str(best_threshold))
-    # print("best ent_average = " + str(best_ent_average))
+    # print("best entropy_average = " + str(best_ent_average))
     # print("best spli rate =  " + str(best_split_rate))
 
     # ----------------Create current Node and recursively create child nodes--------------------------------
@@ -200,7 +214,7 @@ def decision_tree(dataframe, depth):
     right_node = decision_tree(dataframe[dataframe[best_attribute] > best_threshold], depth + 1)
 
     current_node = dt_node(best_attribute, best_threshold, best_ent_average, left_node, right_node, dataframe)
-    print(depth)
+    # print(depth)
     return current_node
 
 def main():
@@ -208,7 +222,8 @@ def main():
     df_snowfolks_data_quantized = data_preprocessing(df_snowfolks_data_raw)
 
     root = decision_tree(df_snowfolks_data_quantized, 0)
-
+    
+    pre_traverse(root)
 
     # print(df_snowfolks_data[df_snowfolks_data['Class'] == 'Assam'])
     # print(df_snowfolks_data_raw.columns)
