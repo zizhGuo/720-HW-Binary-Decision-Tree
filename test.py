@@ -27,6 +27,15 @@ import math
 
 
 class dt_node:
+    """ Decision Tree Node
+    Memember:
+        @attribute: a string that stores the current condition attribute
+        @threshold: a float value that stores the current condition threshold
+        @ent_average: a float value that represents the current responding entropy
+        @left_node: a dt_node that represents the left child decision node
+        @right_node: a dt_node that represents the right child decision node
+        @dataframe: a Pandas dataframe that stores the copy of the current sliced dataframe
+    """
     def __init__(self, attribute = None, threshold = None, ent_average = None, left_node = None, right_node = None, dataframe = None):
         self.attribute = attribute
         self.threshold = threshold
@@ -45,6 +54,7 @@ class dt_node:
 #     current_node.right_node = create_tree(val + 1)
 #     return current_node
 
+# the function for testing the node
 def pre_traverse(node):
     print(node.attribute)
     print(node.threshold)
@@ -52,17 +62,12 @@ def pre_traverse(node):
     if node.left_node != None: pre_traverse(node.left_node)
     if node.right_node != None: pre_traverse(node.right_node)
 
-
-# def main():
-    # root = create_tree(0)
-    # traverse(root)
-
 def data_preprocessing(dataframe):
-    """
+    """ Data preprocessing doing quantization
     Paras:
         @dataframe: a dataframe of data read from CSV file
     Return:
-        dataframe: a dataframe of data
+        dataframe: the modified dataframe after quantization
     """
     columns_size = np.size(dataframe.columns)
     columns = dataframe.columns[0 : columns_size - 1]
@@ -79,16 +84,17 @@ def data_preprocessing(dataframe):
     return dataframe
 
 def entropy_average(dataframe, attribute, threshold):
-    """
+    """ Average weighted Purity calculation for one chosen attribute
+        and threshold
     Paras:
-        @dataframe: a dataframe
-        @attribute: a string of attribute name
-        @threshold: a float threshold
+        @dataframe: a dataframe of quantized data
+        @attribute: a string of the chosen attribute name
+        @threshold: a float type of chosen threshold
     Return:
         dataframe: a dataframe of data
     """
-    df_left = dataframe[dataframe[attribute] <= threshold]
-    df_right = dataframe[dataframe[attribute] > threshold]
+    df_left = dataframe[dataframe[attribute] <= threshold]      # left sliced dataframe (<= threshold) 
+    df_right = dataframe[dataframe[attribute] > threshold]      # right sliced dataframe (> threshold)
     split_rate = np.abs((np.size(df_left[attribute]) \
                         - np.size(df_right[attribute]))) \
                         / np.size(dataframe[attribute])
