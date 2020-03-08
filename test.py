@@ -6,7 +6,7 @@
 # Author: Zizhun Guo
 # Email: zg2808@cs.rit.edu
 # Author: Martin Qian
-# Email: jq3513@g.rit.edu
+# Email: jq3513@rit.edu
 # 
 # RIT, Rochester, NY
 #
@@ -44,6 +44,23 @@ class dt_node:
         self.left_node = left_node 
         self.right_node = right_node
         self.dataframe = dataframe
+        if(left_node==None):
+            self.leaf="left"
+            data_leaf=dataframe[dataframe[attribute] <= threshold]
+            dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
+            dataframe_bhuttan = dataframe[dataframe['Class'] == 'Bhuttan']
+            assam_count = np.size(dataframe_assam['Age'])
+            bhuttan_count = np.size(dataframe_bhuttan['Age'])
+            self.category=(assam_count>bhuttan_count)
+        elif(right_node==None):
+            self.leaf="right"
+            data_leaf=dataframe[dataframe[attribute] >= threshold]
+            dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
+            dataframe_bhuttan = dataframe[dataframe['Class'] == 'Bhuttan']
+            assam_count = np.size(dataframe_assam['Age'])
+            bhuttan_count = np.size(dataframe_bhuttan['Age'])
+            self.category=(assam_count>bhuttan_count)
+
 
 
 # def create_tree(val):
@@ -56,11 +73,17 @@ class dt_node:
 
 # the function for testing the node
 def pre_traverse(node):
-    if node.left_node != None: pre_traverse(node.left_node)
-    print(node.attribute)
-    print(node.threshold)
-    print(node.loss)
-    if node.right_node != None: pre_traverse(node.right_node)
+    print('attribute:'+str(node.attribute))
+    print('threshold:'+ str(node.threshold))
+    print('loss:'+str(node.loss))
+    print('leaf node:'+str(node.leaf))
+    print('category==Assam:'+str(node.category)+'\n')
+
+    if node.left_node != None:
+        pre_traverse(node.left_node)
+    
+    if node.right_node != None: 
+        pre_traverse(node.right_node)
 
 def data_preprocessing(dataframe):
     """ Data preprocessing doing quantization
@@ -101,15 +124,15 @@ def lost_function(dataframe, attribute, threshold):
     df_left_Assam = df_left[df_left['Class'] == 'Assam']
     df_right_Assam = df_right[df_right['Class'] == 'Assam']
 
-    p_left = np.size(df_left_Assam[attribute]) / np.size(df_left[attribute])
-    p_right = np.size(df_right_Assam[attribute]) / np.size(df_right[attribute])
+    pa_left = np.size(df_left_Assam[attribute]) / np.size(df_left[attribute])
+    pa_right = np.size(df_right_Assam[attribute]) / np.size(df_right[attribute])
 
-    if(p_left < 0.75 and p_right < 0.75):
+    if((pa_left < 0.8 and pa_right < 0.8)and(pa_left > 0.2 and pa_right > 0.2)  ):
         return 10,split_rate
 
     Regularization = split_rate
-    ObjectiveFunction=min(1- p_left, 1- p_right)
-    return ObjectiveFunction + Regularization, split_rate
+    ObjectiveFunction=min(1- pa_left, 1- pa_right)
+    return ObjectiveFunction + 2*Regularization, split_rate
 
 def entropy_average(dataframe, attribute, threshold):
     """ Average weighted Purity calculation for one chosen attribute
@@ -200,18 +223,21 @@ def class_assign(dataframe):
 
 def decision_tree(dataframe, depth):
     # ---------------- Stop Criteria--------------------------------
-    if np.size(dataframe['Age']) < 15:
-        class_assign(dataframe)
-        return None
-
     df_Assam = dataframe[dataframe['Class'] == 'Assam']
     class_rate = np.abs(np.size(df_Assam['Age']) / np.size(dataframe['Age']))
-    if  class_rate > 0.75 or class_rate < 0.25:
-        class_assign(dataframe)
+    if  class_rate > 0.8 or class_rate < 0.2:
+        #print('case 2')
+        #class_assign(dataframe)
+        return None
+
+    if np.size(dataframe['Age']) < 15:
+        #print('case 1')
+        #class_assign(dataframe)
         return None
     
-    if depth > 8:
-        class_assign(dataframe)
+    if depth >= 8:
+        #print('case 3')
+        #class_assign(dataframe)
         return None
  
     # ---------------- Attribute Selection-------------------------------- 
