@@ -6,7 +6,7 @@
 # Author: Zizhun Guo
 # Email: zg2808@cs.rit.edu
 # Author: Martin Qian
-# Email: jq3513@rit.edu
+# Email: jq3513@g.rit.edu
 # 
 # RIT, Rochester, NY
 #
