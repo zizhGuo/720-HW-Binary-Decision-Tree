@@ -85,21 +85,34 @@ def pre_traverse(node):
     if node.right_node != None: 
         pre_traverse(node.right_node)
 
-def pre_traverse(node,tree_body):
-    tree_body+='\tif(row['+str(node.)
-    if(row['BangLn']>= 6.0):
-            category_pre.append('Assam')
-    print('attribute:'+str(node.attribute))
-    print('threshold:'+ str(node.threshold))
-    print('loss:'+str(node.loss))
-    print('leaf node:'+str(node.leaf))
-    print('category==Assam:'+str(node.category)+'\n')
+def pre_traverse(node,tree_body,if_flag):
+    if(node.leaf=='right'):
+        symbol='>'
+    else: symbol='<='
+    if(node.category):
+        category='Assam'
+    else: category='Bhuttan'
+    if(if_flag):
+        if_str='if'
+    else: if_str='elif'
+
+    tree_body+='\t\t'+if_str+'(row['+str(node.attribute)+'])'+symbol+str(node.threshold)+'\n'
+    tree_body+="\t\t\tcategory_pre.append('"+category+"')\n"
 
     if node.left_node != None:
-        pre_traverse(node.left_node)
+        tree_body=pre_traverse(node.left_node, tree_body, False)
     
     if node.right_node != None: 
-        pre_traverse(node.right_node)
+        tree_body=pre_traverse(node.right_node, tree_body, False)
+
+    if(node.leaf=='last_node'):
+        if(node.category):
+            category='Bhuttan'
+        else: category='Assam'
+        tree_body+='\t\telse: \n'
+        tree_body+="\t\t\tcategory_pre.append('"+category+"')\n"
+    
+    return tree_body
 
 def data_preprocessing(dataframe):
     """ Data preprocessing doing quantization
@@ -291,20 +304,23 @@ def decision_tree(dataframe, depth):
     # print(depth)
     return current_node
 
-def trained_program_gen():
-    headers='import pandas as pd\nimport numpy as np\nimport sys\n\
-            def main():\n\t\
-            test_data_path=sys.argv[1]\n\t\
-            test_data=pd.read_csv(test_data_path)\n\t\
-           category_pre=[]\n'
+def trained_program_gen(root):
+    headers=\
+'import pandas as pd\nimport numpy as np\nimport sys\n\
+def main():\n\t\
+test_data_path=sys.argv[1]\n\t\
+test_data=pd.read_csv(test_data_path)\n\t\
+category_pre=[]\n'
 
-    tails='\tdf=pd.DataFrame(category_pre)\n\t\
-            df.to_csv("./output.csv")\n\
-            if __name__ == "__main__":\n\
-            main()'
+    tails=\
+'\tdf=pd.DataFrame(category_pre)\n\t\
+df.to_csv("./output.csv")\n\
+if __name__ == "__main__":\n\t\
+main()'
     
-    tree_body='\t\tfor index,row in test_data.iterrows():\n'
-    pre_traverse(node,)
+    tree_body='\tfor index,row in test_data.iterrows():\n'
+    tree_body=pre_traverse(root,tree_body,if_flag=True)
+    print(headers+tree_body+tails)
 
 def main():
     df_snowfolks_data_raw = pd.read_csv('D:/git/720-HW-Binary-Decision-Tree/Abominable_Data_HW05_v720.csv')
@@ -312,8 +328,8 @@ def main():
 
     root = decision_tree(df_snowfolks_data_quantized, 0)
     
-    pre_traverse(root)
-    
+    trained_program=open('trained_program.py',w)
+    trained_program.write(trained_program_gen(root))
 
 if __name__ == "__main__":
     main()
