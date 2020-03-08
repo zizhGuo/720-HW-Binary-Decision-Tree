@@ -35,44 +35,60 @@ class dt_node:
         @left_node: a dt_node that represents the left child decision node
         @right_node: a dt_node that represents the right child decision node
         @dataframe: a Pandas dataframe that stores the copy of the current sliced dataframe
+        @leaf: a str that represents which side is the leaf node
+        @category: a boolean that indicates the category of the leaf node
     """
     def __init__(self, attribute = None, threshold = None, loss = None, left_node = None, right_node = None, dataframe = None):
         self.attribute = attribute
         self.threshold = threshold
         self.loss = loss
-        # self.split_rate = split_rate
         self.left_node = left_node 
         self.right_node = right_node
         self.dataframe = dataframe
-        if(left_node==None):
-            self.leaf="left"
+
+        if(left_node == None and right_node == None):
             data_leaf=dataframe[dataframe[attribute] <= threshold]
-            dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
-            dataframe_bhuttan = dataframe[dataframe['Class'] == 'Bhuttan']
+            dataframe_assam = data_leaf[data_leaf['Class'] == 'Assam']
+            dataframe_bhuttan = data_leaf[data_leaf['Class'] == 'Bhuttan']
             assam_count = np.size(dataframe_assam['Age'])
             bhuttan_count = np.size(dataframe_bhuttan['Age'])
-            self.category=(assam_count>bhuttan_count)
-        elif(right_node==None):
-            self.leaf="right"
+            self.leaf = 'last_node'
+            self.category = assam_count>bhuttan_count
+        elif(left_node == None):
+            data_leaf=dataframe[dataframe[attribute] <= threshold]
+            dataframe_assam = data_leaf[data_leaf['Class'] == 'Assam']
+            dataframe_bhuttan = data_leaf[data_leaf['Class'] == 'Bhuttan']
+            assam_count = np.size(dataframe_assam['Age'])
+            bhuttan_count = np.size(dataframe_bhuttan['Age'])
+            self.leaf = "left"
+            self.category = assam_count>bhuttan_count
+        elif(right_node == None):
             data_leaf=dataframe[dataframe[attribute] >= threshold]
-            dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
-            dataframe_bhuttan = dataframe[dataframe['Class'] == 'Bhuttan']
+            dataframe_assam = data_leaf[data_leaf['Class'] == 'Assam']
+            dataframe_bhuttan = data_leaf[data_leaf['Class'] == 'Bhuttan']
             assam_count = np.size(dataframe_assam['Age'])
             bhuttan_count = np.size(dataframe_bhuttan['Age'])
-            self.category=(assam_count>bhuttan_count)
-
-
-
-# def create_tree(val):
-#     if val == 3:
-#         return node(3)
-#     current_node = node(val)
-#     current_node.left_node = create_tree(val + 1)
-#     current_node.right_node = create_tree(val + 1)
-#     return current_node
+            self.leaf = "right"
+            self.category = assam_count>bhuttan_count
 
 # the function for testing the node
 def pre_traverse(node):
+    print('attribute:'+str(node.attribute))
+    print('threshold:'+ str(node.threshold))
+    print('loss:'+str(node.loss))
+    print('leaf node:'+str(node.leaf))
+    print('category==Assam:'+str(node.category)+'\n')
+
+    if node.left_node != None:
+        pre_traverse(node.left_node)
+    
+    if node.right_node != None: 
+        pre_traverse(node.right_node)
+
+def pre_traverse(node,tree_body):
+    tree_body+='\tif(row['+str(node.)
+    if(row['BangLn']>= 6.0):
+            category_pre.append('Assam')
     print('attribute:'+str(node.attribute))
     print('threshold:'+ str(node.threshold))
     print('loss:'+str(node.loss))
@@ -131,7 +147,7 @@ def lost_function(dataframe, attribute, threshold):
         return 10,split_rate
 
     Regularization = split_rate
-    ObjectiveFunction=min(1- pa_left, 1- pa_right)
+    ObjectiveFunction=min(min(1- pa_left, 1- pa_right),min(pa_right, pa_left))
     return ObjectiveFunction + 2*Regularization, split_rate
 
 def entropy_average(dataframe, attribute, threshold):
@@ -226,18 +242,18 @@ def decision_tree(dataframe, depth):
     df_Assam = dataframe[dataframe['Class'] == 'Assam']
     class_rate = np.abs(np.size(df_Assam['Age']) / np.size(dataframe['Age']))
     if  class_rate > 0.8 or class_rate < 0.2:
-        #print('case 2')
-        #class_assign(dataframe)
+        print('case 2')
+        class_assign(dataframe)
         return None
 
     if np.size(dataframe['Age']) < 15:
-        #print('case 1')
-        #class_assign(dataframe)
+        print('case 1')
+        class_assign(dataframe)
         return None
     
     if depth >= 8:
-        #print('case 3')
-        #class_assign(dataframe)
+        print('case 3')
+        class_assign(dataframe)
         return None
  
     # ---------------- Attribute Selection-------------------------------- 
@@ -275,28 +291,29 @@ def decision_tree(dataframe, depth):
     # print(depth)
     return current_node
 
+def trained_program_gen():
+    headers='import pandas as pd\nimport numpy as np\nimport sys\n\
+            def main():\n\t\
+            test_data_path=sys.argv[1]\n\t\
+            test_data=pd.read_csv(test_data_path)\n\t\
+           category_pre=[]\n'
+
+    tails='\tdf=pd.DataFrame(category_pre)\n\t\
+            df.to_csv("./output.csv")\n\
+            if __name__ == "__main__":\n\
+            main()'
+    
+    tree_body='\t\tfor index,row in test_data.iterrows():\n'
+    pre_traverse(node,)
 
 def main():
     df_snowfolks_data_raw = pd.read_csv('D:/git/720-HW-Binary-Decision-Tree/Abominable_Data_HW05_v720.csv')
     df_snowfolks_data_quantized = data_preprocessing(df_snowfolks_data_raw)
 
-    
     root = decision_tree(df_snowfolks_data_quantized, 0)
     
     pre_traverse(root)
-
-    # print(df_snowfolks_data[df_snowfolks_data['Class'] == 'Assam'])
-    # print(df_snowfolks_data_raw.columns)
-    # print(df_snowfolks_data_raw.columns[1:3]) # select columns titles
-    # print(df_snowfolks_data_raw['Reach']- 100) # split dataframe based on threshold
     
-    # data_ages= np.round(df_snowfolks_data_raw['Age'] / 2) * 2 # 
-    # df_snowfolks_data_raw['Age'] = data_ages
-
-    # data_height= np.round(df_snowfolks_data_raw['Ht'] / 5) * 5 # 
-    # df_snowfolks_data_raw['Ht'] = data_height
-
-
 
 if __name__ == "__main__":
     main()
