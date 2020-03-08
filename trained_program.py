@@ -12,7 +12,7 @@ def main():
             category_pre.append('Assam')
         elif(row['Ht']<= 140):
             category_pre.append('Bhuttan')
-        elif(row['EarLobes']<=0):
+        elif(row['EarLobes']<= 0):
             category_pre.append('Bhuttan')
         elif(row['TailLn']<= 12.0):
             category_pre.append('Assam')

@@ -96,7 +96,7 @@ def pre_traverse(node,tree_body,if_flag):
         if_str='if'
     else: if_str='elif'
 
-    tree_body+='\t\t'+if_str+'(row['+str(node.attribute)+'])'+symbol+str(node.threshold)+'\n'
+    tree_body+='\t\t'+if_str+"(row['"+str(node.attribute)+"'])"+symbol+str(node.threshold)+':\n'
     tree_body+="\t\t\tcategory_pre.append('"+category+"')\n"
 
     if node.left_node != None:
@@ -320,15 +320,15 @@ main()'
     
     tree_body='\tfor index,row in test_data.iterrows():\n'
     tree_body=pre_traverse(root,tree_body,if_flag=True)
-    print(headers+tree_body+tails)
+    return(headers+tree_body+tails)
 
 def main():
-    df_snowfolks_data_raw = pd.read_csv('./Abominable_Data_HW05_v720.csv')
+    df_snowfolks_data_raw = pd.read_csv('720-HW-Binary-Decision-Tree\Abominable_Data_HW05_v720.csv')
     df_snowfolks_data_quantized = data_preprocessing(df_snowfolks_data_raw)
 
     root = decision_tree(df_snowfolks_data_quantized, 0)
     
-    trained_program=open('trained_program.py',w)
+    trained_program=open('trained_program.py','w')
     trained_program.write(trained_program_gen(root))
 
 if __name__ == "__main__":
