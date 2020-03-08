@@ -156,7 +156,7 @@ def lost_function(dataframe, attribute, threshold):
     pa_left = np.size(df_left_Assam[attribute]) / np.size(df_left[attribute])
     pa_right = np.size(df_right_Assam[attribute]) / np.size(df_right[attribute])
 
-    if((pa_left < 0.8 and pa_right < 0.8)and(pa_left > 0.2 and pa_right > 0.2)  ):
+    if((pa_left < 0.8 and pa_right < 0.8)and(pa_left > 0.2 and pa_right > 0.2)  ): # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         return 10,split_rate
 
     Regularization = split_rate
@@ -323,7 +323,7 @@ main()'
     print(headers+tree_body+tails)
 
 def main():
-    df_snowfolks_data_raw = pd.read_csv('D:/git/720-HW-Binary-Decision-Tree/Abominable_Data_HW05_v720.csv')
+    df_snowfolks_data_raw = pd.read_csv('./Abominable_Data_HW05_v720.csv')
     df_snowfolks_data_quantized = data_preprocessing(df_snowfolks_data_raw)
 
     root = decision_tree(df_snowfolks_data_quantized, 0)
