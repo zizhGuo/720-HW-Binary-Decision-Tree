@@ -23,7 +23,7 @@ import pandas as pd # data analysis and manipulation package
 import matplotlib.pyplot as plt # plotting package
 from datetime import datetime # python std data package
 import sys # for using command line argument
-import math
+import math # for entropy calculation
 
 
 class dt_node:
@@ -38,14 +38,15 @@ class dt_node:
         @leaf: a str that represents which side is the leaf node
         @category: a boolean that indicates the category of the leaf node
     """
-    def __init__(self, attribute = None, threshold = None, loss = None, left_node = None, right_node = None, dataframe = None):
+    def __init__(self, attribute = None, threshold = None, loss = None,\
+         left_node = None, right_node = None, dataframe = None):
         self.attribute = attribute
         self.threshold = threshold
         self.loss = loss
         self.left_node = left_node 
         self.right_node = right_node
         self.dataframe = dataframe
-
+        
         if(left_node == None and right_node == None):
             data_leaf=dataframe[dataframe[attribute] <= threshold]
             dataframe_assam = data_leaf[data_leaf['Class'] == 'Assam']
@@ -71,21 +72,32 @@ class dt_node:
             self.leaf = "right"
             self.category = assam_count>bhuttan_count
 
-# the function for testing the node
-def pre_traverse(node):
+
+def pre_traverse_(node):
+    ''' pre traverse the tree, from the root
+
+    '''
     print('attribute:'+str(node.attribute))
     print('threshold:'+ str(node.threshold))
     print('loss:'+str(node.loss))
+    print('size:'+str(np.size(node.dataframe['Age'])))
     print('leaf node:'+str(node.leaf))
     print('category==Assam:'+str(node.category)+'\n')
 
     if node.left_node != None:
-        pre_traverse(node.left_node)
+        pre_traverse_(node.left_node)
     
     if node.right_node != None: 
-        pre_traverse(node.right_node)
+        pre_traverse_(node.right_node)
 
 def pre_traverse(node,tree_body,if_flag):
+    ''' pre traverse the tree
+        used for generating trained program
+    '''
+
+    ''' doing all decisions of parameters
+
+    '''
     if(node.leaf=='right'):
         symbol='>'
     else: symbol='<='
@@ -96,7 +108,8 @@ def pre_traverse(node,tree_body,if_flag):
         if_str='if'
     else: if_str='elif'
 
-    tree_body+='\t\t'+if_str+"(row['"+str(node.attribute)+"'])"+symbol+str(node.threshold)+':\n'
+    tree_body+='\t\t'+if_str+"(row['"+str(node.attribute)+"'])"+\
+        symbol+str(node.threshold)+':\n'
     tree_body+="\t\t\tcategory_pre.append('"+category+"')\n"
 
     if node.left_node != None:
@@ -105,6 +118,9 @@ def pre_traverse(node,tree_body,if_flag):
     if node.right_node != None: 
         tree_body=pre_traverse(node.right_node, tree_body, False)
 
+    ''' special case for the last node
+
+    '''
     if(node.leaf=='last_node'):
         if(node.category):
             category='Bhuttan'
@@ -123,9 +139,8 @@ def data_preprocessing(dataframe):
     """
     columns_size = np.size(dataframe.columns)
     columns = dataframe.columns[0 : columns_size - 1]
-    # print(columns)
+
     for column in columns:
-        # print(column)
         data = np.round(dataframe[column])
         dataframe[column] = data
     
@@ -143,29 +158,41 @@ def lost_function(dataframe, attribute, threshold):
         @dataframe: a dataframe of quantized data
         @attribute: a string of the chosen attribute name
         @threshold: a float type of chosen threshold
+    Returns:
+        @Lost Function: cost function we get
+        @split rate: evalating how unbalanced the split is
 
     """
-    df_left = dataframe[dataframe[attribute] <= threshold]      # left sliced dataframe (<= threshold) 
-    df_right = dataframe[dataframe[attribute] > threshold]      # right sliced dataframe (> threshold)
+
+    # left sliced dataframe (<= threshold) 
+    df_left = dataframe[dataframe[attribute] <= threshold]
+    # right sliced dataframe (> threshold)      
+    df_right = dataframe[dataframe[attribute] > threshold]
+     
     split_rate = np.abs((np.size(df_left[attribute]) \
                         - np.size(df_right[attribute]))) \
                         / np.size(dataframe[attribute])
     df_left_Assam = df_left[df_left['Class'] == 'Assam']
     df_right_Assam = df_right[df_right['Class'] == 'Assam']
 
-    pa_left = np.size(df_left_Assam[attribute]) / np.size(df_left[attribute])
-    pa_right = np.size(df_right_Assam[attribute]) / np.size(df_right[attribute])
-
-    if((pa_left < 0.8 and pa_right < 0.8)and(pa_left > 0.2 and pa_right > 0.2)  ): # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    pa_left = np.size(df_left_Assam[attribute]) / \
+                    np.size(df_left[attribute])
+    pa_right = np.size(df_right_Assam[attribute]) / \
+                    np.size(df_right[attribute])
+    
+    # meeting the requirements for accuracy
+    if((pa_left < 0.8 and pa_right < 0.8)and(pa_left > 0.2 and pa_right > 0.2)):
         return 10,split_rate
-
+    
+    # calculate cost function
     Regularization = split_rate
     ObjectiveFunction=min(min(1- pa_left, 1- pa_right),min(pa_right, pa_left))
-    return ObjectiveFunction + 2*Regularization, split_rate
+    return (ObjectiveFunction + 2*Regularization)/3, split_rate
 
 def entropy_average(dataframe, attribute, threshold):
     """ Average weighted Purity calculation for one chosen attribute
-        and threshold
+        and threshold, this function is not used due to the change of 
+        cost function  
     Paras:
         @dataframe: a dataframe of quantized data
         @attribute: a string of the chosen attribute name
@@ -173,8 +200,10 @@ def entropy_average(dataframe, attribute, threshold):
     Return:
         dataframe: a dataframe of data
     """
-    df_left = dataframe[dataframe[attribute] <= threshold]      # left sliced dataframe (<= threshold) 
-    df_right = dataframe[dataframe[attribute] > threshold]      # right sliced dataframe (> threshold)
+    # left sliced dataframe (<= threshold) 
+    df_left = dataframe[dataframe[attribute] <= threshold] 
+    # right sliced dataframe (> threshold)    
+    df_right = dataframe[dataframe[attribute] > threshold]      
     split_rate = np.abs((np.size(df_left[attribute]) \
                         - np.size(df_right[attribute]))) \
                         / np.size(dataframe[attribute])
@@ -184,30 +213,18 @@ def entropy_average(dataframe, attribute, threshold):
     p_left = np.size(df_left_Assam[attribute]) / np.size(df_left[attribute])
     p_right = np.size(df_right_Assam[attribute]) / np.size(df_right[attribute])
     
-    # print('  threshold = ' + str(threshold))
-    # print('  p_left_assum = ' + str(p_left) )
-    # print('  p_right_assum = ' + str(p_right) )
-    # print('  ' + str(split_rate))
-    # print("")
-    # print("p_left = " + str(p_left))
-    # print("p_right = " + str(p_right))
-  
     ent_left =  0 if p_left == 0 or p_left == 1 \
                 else - p_left * math.log(p_left, 2) \
                     - (1 - p_left) * math.log ((1 - p_left), 2)
     ent_right = 0 if p_right == 0 or p_right == 1 \
                 else - p_right * math.log(p_right, 2) \
                     - (1 - p_right) * math.log ((1 - p_right), 2)
-  
-    # print("ent_left = " + str(ent_left))
-    # print("ent_right = " + str(ent_right))
 
     weight_left = np.size(df_left['Age']) / np.size(dataframe['Age'])
     weight_right =  1 - weight_left
-    ent_average = ent_left * weight_left + ent_right * weight_right
 
-    # print("ent_average = " + str(ent_average) )
-    # print("")
+    # getting entropy of the split
+    ent_average = ent_left * weight_left + ent_right * weight_right
 
     return ent_average, split_rate
 
@@ -215,10 +232,11 @@ def threshold_selection_in_attribute(dataframe, attribute, step):
     min_threshold = np.min(dataframe[attribute]) # starting threshold 
     max_threshold = np.max(dataframe[attribute]) # ending threshold
 
-    best_threshold = min_threshold # best threshold that provides minimized entropy
+    # best threshold that provides minimized entropy
+    best_threshold = min_threshold 
     best_loss = np.inf # the minimized average entropy
     threshold = min_threshold # threshold for traversing
-    best_split_rate = np.inf
+    best_split_rate = np.inf # best split rate
 
     while threshold < max_threshold:
         
@@ -234,38 +252,36 @@ def threshold_selection_in_attribute(dataframe, attribute, step):
             best_split_rate = split_rate
         
         threshold += step
-    # print("attribute = " + attribute)
-    # print("best ent_average = " + str(best_loss))
-    # print("best threshold = " + str(best_threshold))
-    # print("best split rate = " + str(best_split_rate))
-    # print("")
+    
     return attribute, best_threshold, best_loss, best_split_rate
 
 def class_assign(dataframe):
+    # a printing function for all leaf node we get
     dataframe_assam = dataframe[dataframe['Class'] == 'Assam']
     dataframe_bhuttan = dataframe[dataframe['Class'] == 'Bhuttan']
     assam_count = np.size(dataframe_assam['Age'])
     bhuttan_count = np.size(dataframe_bhuttan['Age'])
     
-    print("Class: Bhuttan : "+ str(bhuttan_count))
     print("Class: Assam: " + str(assam_count))
+    print("Class: Bhuttan : "+ str(bhuttan_count))
+    
 
 def decision_tree(dataframe, depth):
     # ---------------- Stop Criteria--------------------------------
     df_Assam = dataframe[dataframe['Class'] == 'Assam']
     class_rate = np.abs(np.size(df_Assam['Age']) / np.size(dataframe['Age']))
     if  class_rate > 0.8 or class_rate < 0.2:
-        print('case 2')
+        print('leaf node')
         class_assign(dataframe)
         return None
 
     if np.size(dataframe['Age']) < 15:
-        print('case 1')
+        print('leaf node')
         class_assign(dataframe)
         return None
     
     if depth >= 8:
-        print('case 3')
+        print('leaf node generated:')
         class_assign(dataframe)
         return None
  
@@ -277,7 +293,7 @@ def decision_tree(dataframe, depth):
     best_split_rate = np.inf
 
     for attribute in dataframe.columns[0 : np.size(attributes) - 1]:
-        # print(attribute)
+        # attributes selection and threshold testing
         step = 1.0
         if attribute == 'Age': step = 2.0
         if attribute == 'Ht': step = 5.0
@@ -289,19 +305,16 @@ def decision_tree(dataframe, depth):
             best_loss = loss
             best_split_rate = split_rate
 
-    # print("--------------------------------------------")
-    # print("best attribute = " + best_attribute)
-    # print("best threshold = " + str(best_threshold))
-    # print("best entropy_average = " + str(best_ent_average))
-    # print("best spli rate =  " + str(best_split_rate))
+    # ------Create current Node and recursively create child nodes-------
 
-    # ----------------Create current Node and recursively create child nodes--------------------------------
+    left_node = decision_tree(dataframe[dataframe[best_attribute] \
+                                <= best_threshold], depth + 1)
+    right_node = decision_tree(dataframe[dataframe[best_attribute] \
+                                > best_threshold], depth + 1)
 
-    left_node = decision_tree(dataframe[dataframe[best_attribute] <= best_threshold], depth + 1)
-    right_node = decision_tree(dataframe[dataframe[best_attribute] > best_threshold], depth + 1)
+    current_node = dt_node(best_attribute, best_threshold, best_loss, \
+                                left_node, right_node, dataframe)
 
-    current_node = dt_node(best_attribute, best_threshold, best_loss, left_node, right_node, dataframe)
-    # print(depth)
     return current_node
 
 def trained_program_gen(root):
@@ -314,21 +327,27 @@ category_pre=[]\n'
 
     tails=\
 '\tdf=pd.DataFrame(category_pre)\n\t\
-df.to_csv("./output.csv")\n\
+df.to_csv("./HW05_MQ_MyClassifications.csv")\n\
 if __name__ == "__main__":\n\t\
 main()'
     
     tree_body='\tfor index,row in test_data.iterrows():\n'
     tree_body=pre_traverse(root,tree_body,if_flag=True)
+    # generating codes
     return(headers+tree_body+tails)
 
 def main():
-    df_snowfolks_data_raw = pd.read_csv('720-HW-Binary-Decision-Tree\Abominable_Data_HW05_v720.csv')
+    # read_csv
+    df_snowfolks_data_raw = pd.read_csv(sys.argv[1])
+    # quantized data
     df_snowfolks_data_quantized = data_preprocessing(df_snowfolks_data_raw)
-
+    # tree generating
     root = decision_tree(df_snowfolks_data_quantized, 0)
-    
-    trained_program=open('trained_program.py','w')
+    # show results
+    print('tree structure')
+    pre_traverse_(root)
+    # trained_program_gen
+    trained_program=open('./HW05_MQ_Trained_Classifier.py','w')
     trained_program.write(trained_program_gen(root))
 
 if __name__ == "__main__":
