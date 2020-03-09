@@ -10,10 +10,10 @@
 # 
 # RIT, Rochester, NY
 #
-# Pending tasks:
-# 1. Class assigment at leaf node
-# 2. Print trained function
-# 3. Trained program writes csv file
+# 
+# 
+# 
+#
 #
 # Zizhun GUO @ All rights researved
 # -----------------------------------------------------------
